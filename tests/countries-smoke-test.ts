@@ -5,6 +5,8 @@ import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporte
 // @ts-ignore
 import { textSummary } from 'https://jslib.k6.io/k6-summary/0.1.0/index.js';
 
+const REPORT_PATH = 'blob-report/smoke.html';
+
 export const options = scenarios.smoke;
 
 export default function () {
@@ -13,7 +15,7 @@ export default function () {
 
 export function handleSummary(data: any) {
   return {
-    'result.html': htmlReport(data),
+    [REPORT_PATH]: htmlReport(data),
     stdout: textSummary(data, { indent: ' ', enableColors: true }),
   };
 }

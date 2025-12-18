@@ -12,6 +12,8 @@ import { textSummary } from 'https://jslib.k6.io/k6-summary/0.1.0/index.js';
 // @ts-ignore
 import { randomIntBetween } from 'https://jslib.k6.io/k6-utils/1.2.0/index.js';
 
+const REPORT_PATH = 'blob-report/stress.html';
+
 export const options = scenarios.stress;
 
 export default function () {
@@ -30,7 +32,7 @@ export default function () {
 
 export function handleSummary(data: any) {
   return {
-    'result.html': htmlReport(data),
+    [REPORT_PATH]: htmlReport(data),
     stdout: textSummary(data, { indent: ' ', enableColors: true }),
   };
 }

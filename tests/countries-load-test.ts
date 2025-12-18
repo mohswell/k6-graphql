@@ -12,6 +12,7 @@ import { textSummary } from 'https://jslib.k6.io/k6-summary/0.1.0/index.js';
 import { randomIntBetween } from 'https://jslib.k6.io/k6-utils/1.2.0/index.js';
 
 const logger = createLogger('CountriesLoadTest');
+const REPORT_PATH = 'blob-report/load.html';
 
 export function setup() {
     logger.info('Countries API Load Test started');
@@ -39,7 +40,7 @@ export function teardown() {
 
 export function handleSummary(data: any) {
   return {
-    'result.html': htmlReport(data),
+        [REPORT_PATH]: htmlReport(data),
     stdout: textSummary(data, { indent: ' ', enableColors: true }),
   };
 }
