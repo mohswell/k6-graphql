@@ -1,0 +1,43 @@
+{
+  "name": "k6-graphql",
+  "version": "1.0.0",
+  "description": "Scalable and modular k6 GraphQL load testing framework with SOLID principles",
+  "main": "dist/index.js",
+  "owner": "mohswell",
+  "directories": {
+    "lib": "src",
+    "test": "tests"
+  },
+  "scripts": {
+    "build": "tsc",
+    "bundle:smoke": "node scripts/build-smoke-test.js",
+    "bundle:load": "node scripts/build-load-test.js",
+    "bundle:stress": "node scripts/build-stress-test.js",
+    "bundle:spike": "node scripts/build-spike-test.js",
+    "test:smoke": "npm run bundle:smoke && k6 run dist/countries-smoke-test.bundle.js",
+    "test:load": "npm run bundle:load && k6 run dist/countries-load-test.bundle.js",
+    "test:stress": "npm run bundle:stress && k6 run dist/countries-stress-test.bundle.js",
+    "test:spike": "npm run bundle:spike && k6 run dist/countries-spike-test.bundle.js",
+    "test:smoke:debug": "npm run bundle:smoke && k6 run --env DEBUG=true dist/countries-smoke-test.bundle.js",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "k6",
+    "graphql",
+    "load-testing",
+    "performance-testing",
+    "testing",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "esbuild": "^0.27.1"
+  },
+  "dependencies": {
+    "@types/k6": "^1.4.0",
+    "chalk": "^5.6.2",
+    "typescript": "^5.9.3"
+  }
+}

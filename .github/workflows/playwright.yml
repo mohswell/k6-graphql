@@ -1,0 +1,195 @@
+name: k6 Tests
+
+on:
+    push:
+        branches: [main, master]
+    pull_request:
+        branches: [main, master]
+    workflow_dispatch:
+
+env:
+    BASE_URL: ${{ secrets.BASE_URL }}
+    DEBUG: ${{ secrets.DEBUG }}
+
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
+concurrency:
+    group: 'pages'
+    cancel-in-progress: false
+
+jobs:
+    setup-and-smoke-test:
+        name: Setup and Smoke Test
+        timeout-minutes: 60
+        runs-on: ubuntu-latest
+        outputs:
+            smoke_outcome: ${{ steps.smoke.outcome }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: k6 Setup on Runner (deps + cache + k6)
+              uses: ./.github/actions/k6-setup
+
+
+            - name: Run Smoke test (k6)
+              id: smoke
+              run: npm run test:smoke
+
+            - name: Upload HTML Report Artifact
+              if: always()
+              uses: ./.github/actions/k6-report
+              with:
+                  test-step-outcome: ${{ steps.smoke.outcome }}
+                  blob-report-upload: 'true'
+
+    load-test:
+        name: Load Test
+        timeout-minutes: 60
+        runs-on: ubuntu-latest
+        outputs:
+            load_outcome: ${{ steps.load.outcome }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: k6 Setup on Runner (deps + cache + k6)
+              uses: ./.github/actions/k6-setup
+
+
+            - name: Run Load test (k6)
+              id: load
+              run: npm run test:load
+
+            - name: Upload HTML Report Artifact
+              if: always()
+              uses: ./.github/actions/k6-report
+              with:
+                  test-step-outcome: ${{ steps.load.outcome }}
+                  blob-report-upload: 'true'
+
+    stress-test:
+        name: Stress Test
+        timeout-minutes: 120
+        runs-on: ubuntu-latest
+        outputs:
+            stress_outcome: ${{ steps.stress.outcome }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: k6 Setup on Runner (deps + cache + k6)
+              uses: ./.github/actions/k6-setup
+
+            - name: Run Stress test (k6)
+              id: stress
+              run: npm run test:stress
+
+            - name: Upload HTML Report Artifact
+              if: always()
+              uses: ./.github/actions/k6-report
+              with:
+                  test-step-outcome: ${{ steps.stress.outcome }}
+                  blob-report-upload: 'true'
+
+    spike-test:
+        name: Spike Test
+        timeout-minutes: 60
+        runs-on: ubuntu-latest
+        outputs:
+            spike_outcome: ${{ steps.spike.outcome }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: k6 Setup on Runner (deps + cache + k6)
+              uses: ./.github/actions/k6-setup
+
+            - name: Run Spike test (k6)
+              id: spike
+              run: npm run test:spike
+
+            - name: Upload HTML Report Artifact
+              if: always()
+              uses: ./.github/actions/k6-report
+              with:
+                  test-step-outcome: ${{ steps.spike.outcome }}
+                  blob-report-upload: 'true'
+
+    merge-report:
+        name: Merge Report
+        if: always()
+        needs: [setup-and-smoke-test, load-test, stress-test, spike-test]
+        timeout-minutes: 60
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+
+            - name: Install Dependencies
+              run: npm ci
+
+            - name: Download blob reports from GitHub Actions Artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  path: all-blob-reports
+                  pattern: blob-report-*
+                  merge-multiple: true
+
+            - name: Check if blob reports exist
+              run: |
+                  if [ ! -d "./all-blob-reports" ] || [ -z "$(ls -A ./all-blob-reports)" ]; then
+                      echo "No blob reports found. Creating default report."
+                      mkdir -p ./k6-report
+                      echo '<html><body><h1>No k6 reports available</h1></body></html>' > ./k6-report/index.html
+                  else
+                      node scripts/merge-k6-reports.js all-blob-reports k6-report
+                  fi
+
+            - name: Upload Merged Report
+              uses: actions/upload-artifact@v4
+              with:
+                  name: k6-Merged-Dashboard
+                  path: k6-report
+                  retention-days: 7
+
+    build-report:
+        name: Build Report
+        if: always()
+        needs: merge-report
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Download Merged Dashboard
+              uses: actions/download-artifact@v4
+              with:
+                  name: k6-Merged-Dashboard
+                  path: ./_site
+
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: ./_site
+
+    deploy-report:
+        name: Deploy Report
+        if: always()
+        needs: build-report
+        environment:
+            name: github-pages
+            url: 'https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
