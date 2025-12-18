@@ -30,3 +30,6 @@ results/
 # k6 output
 summary.json
 results.json
+result.html
+all-blob-reports/
+k6-report/
