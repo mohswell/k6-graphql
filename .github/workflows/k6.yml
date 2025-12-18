@@ -34,7 +34,6 @@ jobs:
             - name: k6 Setup on Runner (deps + cache + k6)
               uses: ./.github/actions/k6-setup
 
-
             - name: Run Smoke test (k6)
               id: smoke
               run: npm run test:smoke
@@ -58,7 +57,6 @@ jobs:
 
             - name: k6 Setup on Runner (deps + cache + k6)
               uses: ./.github/actions/k6-setup
-
 
             - name: Run Load test (k6)
               id: load
