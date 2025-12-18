@@ -121,7 +121,7 @@ Each scenario represents a **realistic user journey**, not a random request.
 
 ---
 
-## 📊 Metrics
+## Metrics
 
 In addition to built-in k6 metrics, the project tracks:
 
