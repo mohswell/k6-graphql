@@ -176,6 +176,12 @@ jobs:
                   name: k6-Merged-Dashboard
                   path: ./_site
 
+            - name: Clean up old artifacts
+              uses: geekyeggo/delete-artifact@v2
+              with:
+                  name: github-pages
+                  failOnError: false
+
             - name: Upload artifact
               uses: actions/upload-pages-artifact@v3
               with:
